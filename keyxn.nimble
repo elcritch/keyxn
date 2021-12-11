@@ -1,0 +1,12 @@
+# Package
+
+version       = "0.1.0"
+author        = "Jaremy Creechley"
+description   = "Pure Nim implementation of Shamir's Secret Sharing (SSS) algorithm"
+license       = "MIT"
+srcDir        = "src"
+
+
+# Dependencies
+
+requires "nim >= 1.4.0"
