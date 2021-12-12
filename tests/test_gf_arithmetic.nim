@@ -2,7 +2,7 @@
 import unittest
 import sequtils
 
-import keyxn/shamir_arithmetic
+import keyxn/gf_arithmetic
 
 test "pfield add":
   check 16'g8 + 16'g8 == 0'g8
