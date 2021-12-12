@@ -1,6 +1,5 @@
 import std/sysrand
 import strutils
-import sequtils
 
 import tables
 
@@ -9,6 +8,8 @@ type
   Polynomial* = object
     coefs*: seq[gfInt8]
 
+proc `$`*(x: gfInt8): string {.borrow.}
+
 proc log*(x: gfInt8): gfInt8 {.inline.} =
   result = gfint8 tables.log_over_log_table[x.uint8]
 
@@ -16,7 +17,7 @@ proc exp*(x: gfInt8): gfint8 {.inline.} =
   result = gfint8 tables.anti_log_table[x.uint8]
 
 proc `+`*(x, y: gfInt8): gfInt8 =
-  var val: int = x.int + y.int 
+  var val: int = x.int xor y.int 
   result = gfInt8(val mod 255)
 
 proc `-`*(x, y: gfInt8): gfInt8 =
@@ -45,9 +46,13 @@ proc `*`*(lhs, rhs: gfInt8): gfInt8 =
   # done for timing purposes
   if lhs == 0'g8 or rhs == 0'g8: zero else: ret
 
-proc randPolynomial*(intercept: gfInt8, degree: int): Polynomial =
+proc randPolynomial*(intercept: gfInt8, degree: uint): Polynomial =
   result.coefs = newSeq[gfInt8](degree+1)
-  result.coefs[1..^1] = urandom(degree).mapIt(it.gfInt8()) 
+  result.coefs[0] = intercept
+  if degree > 1:
+    let rd = urandom(degree)
+    for i in 1..<len(result.coefs):
+      result.coefs[i] = gfInt8 rd[i-1]
 
 proc evaluate*(poly: Polynomial, x: gfInt8): gfInt8 =
   ## evaluate the GF polynomial for a given set of X's and Y's
