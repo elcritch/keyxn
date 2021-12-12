@@ -13,6 +13,8 @@ type
 
 proc `$`*(shs: ShamirSecret): string =
   result = shs.data.toHex()
+proc `$`*(shs: ShamirPart): string =
+  result = shs.data.toHex()
 
 proc parseSecretHex*(hexValue: string): ShamirSecret =
   result = ShamirSecret(data: hexValue.parseHexStr())

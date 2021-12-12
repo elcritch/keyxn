@@ -32,14 +32,14 @@ test "basic recover static long":
 
 test "basic split & recover short":
   let secret = ShamirSecret(data: "t")
-  let shares = secret.split(2, 2)
+  let shares = secret.split(k=2, parts=2)
 
   let res = shares.recover()
   check secret == res
 
 test "basic split & recover long":
   let secret = initSecret("super secret")
-  let shares = secret.split(2, 4)
+  let shares = secret.split(k=2, parts=4)
 
   let
     res = shares[0..1].recover()

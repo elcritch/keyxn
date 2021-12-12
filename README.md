@@ -5,6 +5,15 @@ This is a port from the [KeyX](https://github.com/elcritch/keyx) which is itself
 Usage is simple. 
 
 ```nim
+# Create a secret
+let secret: ShamirSecret = initSecret("super secret")
+# Split into 4 parts and require 2 to recover
+let shares: seq[ShamirPart] = secret.split(k=2, parts=4)
+
+# Recover secret with 2 parts
+let recovered = shares[0..1].recover()
+
+check secret == recovered
 ```
 
 ## History
