@@ -1,7 +1,7 @@
 
 import unittest
 import strutils
-import base64
+import sequtils
 
 import keyxn/shamir
 
@@ -17,5 +17,16 @@ test "basic recover static short":
   let shares =
     [ShamirPart(data: "0E4A".parseHexStr()),
      ShamirPart(data: "9954".parseHexStr())]
-  let res = recover(shares)
+  let res = shares.recover()
   assert "t" == res.data
+
+test "basic recover static long":
+  let
+    shares =
+      ["C8EF4C4201", "9673E6A402", "2AF9D99203", "992DC30904", "25A7FC3F05"]
+      .mapIt(it.parseHexStr())
+      .mapIt(ShamirPart(data: it))
+
+  let
+    res = shares.recover()
+  check "test" == res.data
