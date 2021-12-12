@@ -7,7 +7,7 @@ import tables
 type
   gfInt8* = distinct uint8
   Polynomial* = object
-    coefs: seq[gfInt8]
+    coefs*: seq[gfInt8]
 
 proc log*(x: gfInt8): gfInt8 {.inline.} =
   result = gfint8 tables.log_over_log_table[x.uint8]

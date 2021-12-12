@@ -1,5 +1,6 @@
 
 import unittest
+import sequtils
 
 import keyxn/shamir_arithmetic
 
@@ -8,50 +9,52 @@ test "can add":
 
 
 test "pfield add":
-  check Arithmetic.+(16,16) == 0
-  check Arithmetic.+(3,4) == 7
+  check 16'g8 + 16'g8 == 0'g8
+  check 3'g8 + 4'g8 == 7'g8
   # check Arithmetic.+(3,4) == 7
 
 test "pfield mult":
-  check Arithmetic.*(3,7) == 9
-  check Arithmetic.*(3,0) == 0
-  check Arithmetic.*(0,3) == 0
+  check 3'g8 * 7'g8 == 9'g8
+  check 3'g8 * 0'g8 == 0'g8
+  check 0'g8 * 3'g8 == 0'g8
 
 test "pfield div":
-  check Arithmetic./(0,7) == 0
-  check Arithmetic./(3,3) == 1
-  check Arithmetic./(6,3) == 2
+  check 0'g8 div 7'g8 == 0'g8
+  check 3'g8 div 3'g8 == 1'g8
+  check 6'g8 div 3'g8 == 2'g8
 
 test "random polynomial? ":
-  poly = Arithmetic.polynomial(42, 2)
+  let poly = randPolynomial(42'g8, 2)
 
-  check [42 | res] = poly
-  check length(res) == 2
+  check 42'g8 == poly.coefs[0]
+  check poly.coefs.len() == 2
 
 test "poly evaluate simple":
 
-  poly = Arithmetic.polynomial(42, 1)
+  let poly = randPolynomial(42'g8, 1)
 
-  check Arithmetic.evaluate(poly, 0) == 42
+  check evaluate(poly, 0) == 42
 
 test "poly evaluate advanced":
 
-  poly = Arithmetic.polynomial(42, 1)
+  let poly = randPolynomial(42'g8, 1)
 
-  res_poly = Arithmetic.evaluate(poly, 1)
-  res_exp = Arithmetic.+(42, Arithmetic.*(1, Enum.at(poly,1) ))
+  let res_poly = evaluate(poly, 1'g8)
+  let res_poly2 = poly[1'g8]
+  let res_exp = 42'g8 + 1'g8 * poly.coefs[1]
 
   check res_poly == res_exp
+  check res_poly2 == res_exp
 
 test "poly random":
 
-  for i <- 0..255:
+  for i in 0..255:
 
-    poly = Arithmetic.polynomial(i,2)
+    let poly = randPolynomial(i.gfInt8, 2)
 
-    x_vals = [1, 2, 3]
-    y_vals = x_vals |> Enum.map(&(Arithmetic.evaluate(poly, &1)))
+    let x_vals = @[1'g8, 2'g8, 3'g8]
+    let y_vals = x_vals.mapIt(poly[it]) 
 
-    out = Arithmetic.interpolate(x_vals, y_vals, 0)
+    let res = interpolate(x_vals, y_vals, 0'g8)
 
-    check out == i
+    check res == i.gfInt8()
