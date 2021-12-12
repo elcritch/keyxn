@@ -76,13 +76,12 @@ proc interpolate*(xs, ys: seq[gfInt8], x: gfInt8): gfInt8 =
   assert xs.len() == ys.len()
 
   # Loop through all the x & y samples, reducing them to an answer
-  var val = 0'g8
-  for i in 0..<len(xs):
+  result = 0'g8
+  for i in 0 ..< xs.len():
     var ba = 1'g8
-    for j in 0..<len(ys):
+    for j in 0 ..< ys.len():
       if i == j: continue
       ba = ba * (x + xs[j]) div (xs[i] + xs[j])
 
     let group = ys[i] * ba
-    val = val + group
-  result = val
+    result = result + group
