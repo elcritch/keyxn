@@ -1,74 +1,78 @@
-defmodule KeyX.Shamir do
-  alias KeyX.Shamir.Arithmetic
+import random
+import sets
+import sequtils
 
-  @spec split_secret(non_neg_integer, non_neg_integer, binary) :: list(binary)
-  def split_secret(_k, n, _secret) when n > 255, do: raise "too many parts, n <= 255"
-  def split_secret(k, n, _secret) when k > n, do: raise "k cannot be less than total shares"
-  def split_secret(k, _n, _secret) when k < 2, do: raise "k cannot be less than 2"
-  def split_secret(_k, _n, secret) when length(secret) == 0, do: raise "secret cannot be zero"
-  def split_secret(k, n, secret) do
-    set_random_seed() # Generate random x coordinates
-    x_coorinates = 0..254 |> rand_shuffle
+import gf_arithmetic
 
-    # This is where implementations can differ, presumably. The H.C. Vault developers noted:
-    # // Make random polynomials for each byte of the secret
-    # // Construct a random polynomial for each byte of the secret.
-    #	// Because we are using a field of size 256, we can only represent
-    #	// a single byte as the intercept of the polynomial, so we must
-    #	// use a new polynomial for each byte.
-    # We could use larger numbers (large field set (larger primes?)),
-    # but maintaining compatibility is a key goal in this project
-    shares_init = for _ <- 1..n, do: []
+type
+  ShamirSecret* = object
+    data*: string
+  ShamirPart* = object
+    data*: string
 
-    shares = Enum.reduce :binary.bin_to_list(secret), shares_init, fn(val, shares) ->
-      poly = Arithmetic.polynomial(val, k-1)
+# @spec split_secret(non_neg_integer, non_neg_integer, binary) :: list(binary)
+proc split*(secret: ShamirSecret, k, parts: uint): seq[ShamirPart] =
+  if parts > 255:
+    raise newException(ValueError, "too many parts, n <= 255")
+  elif k > parts:
+    raise newException(ValueError, "k cannot be less than total shares")
+  elif k < 2:
+    raise newException(ValueError, "k cannot be less than 2")
+  elif secret.data.len() == 0:
+    raise newException(ValueError, "secret cannot be zero")
 
-      for {x_val,y_acc} <- Enum.zip(x_coorinates, shares), into: [] do
-        x = x_val + 1
-        y = poly |> Arithmetic.evaluate(x)
-        [ y_acc, y ]
-      end
-    end
+  # randomize
+  var x_cords = newSeq[byte](255)
+  for i in 0..<255: x_cords[i] = i.byte
 
-    for {share,x} <- Enum.zip(shares, x_coorinates), into: [] do
-      :binary.list_to_bin([share, (x + 1) ])
-    end
-  end
+  var r = initRand()
+  r.shuffle(x_cords)
 
-  @spec recover_secret( list(binary) ) :: binary
-  def recover_secret(shares) do
-    # Constants
-    shares = Enum.map(shares, &:binary.bin_to_list/1)
-    sizes = for share <- shares, into: [], do: length(share)
-    [ size | other_sz ] = sizes |> Enum.uniq
+  # This is where implementations can differ, presumably.
+  # The H.C. Vault developers noted:
+  # Make random polynomials for each byte of the secret
+  # Construct a random polynomial for each byte of the secret.
+  #	Because we are using a field of size 256, we can only represent
+  #	a single byte as the intercept of the polynomial, so we must
+  #	use a new polynomial for each byte.
+  # We could use larger numbers (large field set (larger primes?)),
+  # but maintaining compatibility is a key goal in this project
+  var shares: seq[ShamirPart]
+  newSeq(shares, parts)
+  for idx in 0..<parts:
+    shares[idx].data = newString(secret.data.len()+1)
+    shares[idx].data[^1] = char(x_cords[idx] + 1)
 
-    y_len = size - 1
-    x_samples = for share <- shares, do: List.last(share)
+  for idx, val in secret.data:
+    let poly = randPolynomial(val.gfInt8(), k-1)
 
-    # Error checking
-    unless [] = other_sz, do: raise "shares must match in size"
-    unless length(x_samples) == MapSet.size(MapSet.new(x_samples)), do: raise "Duplicated shares"
+    for j in 0..<parts:
+      let x = gfInt8(x_cords[j] + 1)
+      let y = poly.evaluate(x)
+      shares[j].data[idx] = y.char
 
-    # Evaluate polynomials and return secret!
-    res = for idx <- 0..(y_len-1), into: [] do
-      y_samples = for share <- shares, into: [] do
-        share |> Enum.at(idx)
-      end
-      KeyX.Shamir.Arithmetic.interpolate(x_samples, y_samples, 0)
-    end
+  return shares
 
-    res |> :binary.list_to_bin
-  end
+proc recover*(shares: seq[ShamirPart]): ShamirSecret =
+  # Constants
+  if shares.len() < 1:
+    raise newException(ValueError, "not enough shares")
 
+  let y_len = shares[0].data.len() - 1
+  for share in shares:
+    if share.data.len() - 1 != y_len:
+      raise newException(ValueError, "share must be same size")
 
-  def set_random_seed() do
-    # https://hashrocket.com/blog/posts/the-adventures-of-generating-random-numbers-in-erlang-and-elixir
-    << i1 :: unsigned-integer-32, i2 :: unsigned-integer-32, i3 :: unsigned-integer-32>> = :crypto.strong_rand_bytes(12)
-    :rand.seed(:exsplus, {i1, i2, i3})
-  end
+  # Error checking
+  let shashes = toHashSet(shares)
+  if shashes.len() != shares.len():
+    raise newException(ValueError, "Duplicated shares")
 
-  def rand_shuffle(list) do
-    list |> Enum.sort_by( fn _x -> :rand.uniform() end )
-  end
+  # Evaluate polynomials and return secret!
+  let x_samples = shares.mapIt(it.data[^1].gfInt8())
+  var secret = ShamirSecret(data: newString(y_len))
+  for idx in 0..<y_len:
+    let y_samples = shares.mapIt(it.data[idx].gfInt8())
+    secret.data[idx] = interpolate(x_samples, y_samples, 0'g8).char()
 
-end
+  return secret
