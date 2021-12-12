@@ -45,11 +45,11 @@ test "poly random":
 
   for i in 0..255:
 
-    let poly = randPolynomial(i.gfInt8, 2)
+    let val = i.gfInt8()
+    let poly = randPolynomial(val, 2)
 
     let x_vals = @[1'g8, 2'g8, 3'g8]
-    let y_vals = x_vals.mapIt(poly[it]) 
+    let y_vals = x_vals.mapIt(poly.evaluate(it)) 
 
     let res = interpolate(x_vals, y_vals, 0'g8)
-
-    # check res == i.gfInt8()
+    check res == val

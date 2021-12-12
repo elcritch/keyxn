@@ -17,13 +17,9 @@ proc exp*(x: gfInt8): gfint8 {.inline.} =
   result = gfint8 tables.anti_log_table[x.uint8]
 
 proc `+`*(x, y: gfInt8): gfInt8 =
-  var val: int = x.int xor y.int 
-  result = gfInt8(val mod 255)
+  result = gfInt8(x.uint8 xor y.uint8) 
 
-proc `-`*(x, y: gfInt8): gfInt8 =
-  var val: int = x.int - y.int
-  result = gfInt8((val + 255) mod 255)
-
+proc `-`*(x, y: gfInt8): gfInt8 {.borrow.}
 proc `==`*(x, y: gfInt8): bool {.borrow.}
 
 proc `'g8`*(n: string): gfInt8 =
@@ -33,7 +29,8 @@ proc `'g8`*(n: string): gfInt8 =
 proc `div`*(lhs, rhs: gfint8): gfint8 =
   var
     zero: gfInt8 = 0'g8
-    ret: gfInt8 = exp(log(lhs) - log(rhs))
+    sub = log(lhs).int - log(rhs).int + 255
+    ret: gfInt8 = exp(gfInt8( sub mod 255))
   # done for timing purposes
   if lhs == 0'g8: zero else: ret
 
@@ -41,7 +38,8 @@ proc `div`*(lhs, rhs: gfint8): gfint8 =
 proc `*`*(lhs, rhs: gfInt8): gfInt8 =
   var
     zero = 0'g8
-    ret = exp(log(lhs) + log(rhs))
+    sum = log(lhs).int + log(rhs).int
+    ret = exp(gfInt8(sum mod 255))
 
   # done for timing purposes
   if lhs == 0'g8 or rhs == 0'g8: zero else: ret
@@ -71,21 +69,20 @@ proc evaluate*(poly: Polynomial, x: gfInt8): gfInt8 =
 proc `[]`*(poly: Polynomial, x: gfInt8): gfInt8 =
   result = poly.evaluate(x)
 
-proc interpolate*(x_samples, y_samples: seq[gfInt8], x: gfInt8): gfInt8 =
+proc interpolate*(xs, ys: seq[gfInt8], x: gfInt8): gfInt8 =
   ## interpolate the GF polynomial for a given set of X's and Y's
   
   # Setup interpolation env
-  assert x_samples.len() == y_samples.len()
-  var limit = len(x_samples) - 1
+  assert xs.len() == ys.len()
 
   # Loop through all the x & y samples, reducing them to an answer
-  for i in 0..limit:
-    var basis = 1'g8
-    for j in 0..limit:
-      if i == j:
-        continue
-      basis = basis * (x + x_samples[j]) div (x_samples[i] + x_samples[j])
+  var val = 0'g8
+  for i in 0..<len(xs):
+    var ba = 1'g8
+    for j in 0..<len(ys):
+      if i == j: continue
+      ba = ba * (x + xs[j]) div (xs[i] + xs[j])
 
-    let group = basis * y_samples[i]
-    result = result + group
-
+    let group = ys[i] * ba
+    val = val + group
+  result = val
