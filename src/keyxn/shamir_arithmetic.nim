@@ -41,6 +41,7 @@ proc `*`*(lhs, rhs: gfInt8): gfInt8 =
   var
     zero = 0'g8
     ret = exp(log(lhs) + log(rhs))
+
   # done for timing purposes
   if lhs == 0'g8 or rhs == 0'g8: zero else: ret
 
@@ -48,15 +49,15 @@ proc randPolynomial*(intercept: gfInt8, degree: int): Polynomial =
   result.coefs = newSeq[gfInt8](degree+1)
   result.coefs[1..^1] = urandom(degree).mapIt(it.gfInt8()) 
 
-# @spec evaluate(polynomial, non_neg_integer) :: non_neg_integer
 proc evaluate*(poly: Polynomial, x: gfInt8): gfInt8 =
+  ## evaluate the GF polynomial for a given set of X's and Y's
   if x == 0'g8:
     result = poly.coefs[0]
   else:
-    # Use Horner's method,
-    # essentially multiply `x` by itself `n` times while adding each
-    # lower order coefficient as the 'intercept' each time 
-    # ... or something ;)
+    # Use Horner's method:
+    #  essentially multiply `x` by itself `n` times while adding each
+    #  lower order coefficient as the 'intercept' each time 
+    #  ... or something ;)
     let n = poly.coefs.high - 1
     result = poly.coefs[^1]
     for i in countdown(n, 0):
@@ -65,8 +66,9 @@ proc evaluate*(poly: Polynomial, x: gfInt8): gfInt8 =
 proc `[]`*(poly: Polynomial, x: gfInt8): gfInt8 =
   result = poly.evaluate(x)
 
-# interp
 proc interpolate*(x_samples, y_samples: seq[gfInt8], x: gfInt8): gfInt8 =
+  ## interpolate the GF polynomial for a given set of X's and Y's
+  
   # Setup interpolation env
   assert x_samples.len() == y_samples.len()
   var limit = len(x_samples) - 1
