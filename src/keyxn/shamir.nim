@@ -8,12 +8,12 @@ import gf_arithmetic
 type
   ShamirSecret* = object
     data*: string
-  ShamirPart* = object
+  ShamirShare* = object
     data*: string
 
 proc `$`*(shs: ShamirSecret): string =
   result = shs.data.toHex()
-proc `$`*(shs: ShamirPart): string =
+proc `$`*(shs: ShamirShare): string =
   result = shs.data.toHex()
 
 proc parseSecretHex*(hexValue: string): ShamirSecret =
@@ -21,13 +21,13 @@ proc parseSecretHex*(hexValue: string): ShamirSecret =
 proc initSecret*(rawValue: string): ShamirSecret =
   result = ShamirSecret(data: rawValue)
 
-proc parseShareHex*(hexValue: string): ShamirPart =
-  result = ShamirPart(data: hexValue.parseHexStr())
-proc initShare*(rawValue: string): ShamirPart =
-  result = ShamirPart(data: rawValue)
+proc parseShareHex*(hexValue: string): ShamirShare =
+  result = ShamirShare(data: hexValue.parseHexStr())
+proc initShare*(rawValue: string): ShamirShare =
+  result = ShamirShare(data: rawValue)
 
 # @spec split_secret(non_neg_integer, non_neg_integer, binary) :: list(binary)
-proc split*(secret: ShamirSecret, k, parts: uint): seq[ShamirPart] =
+proc split*(secret: ShamirSecret, k, parts: uint): seq[ShamirShare] =
   if parts > 255:
     raise newException(ValueError, "too many parts, n <= 255")
   elif k > parts:
@@ -53,7 +53,7 @@ proc split*(secret: ShamirSecret, k, parts: uint): seq[ShamirPart] =
   #	use a new polynomial for each byte.
   # We could use larger numbers (large field set (larger primes?)),
   # but maintaining compatibility is a key goal in this project
-  var shares: seq[ShamirPart]
+  var shares: seq[ShamirShare]
   newSeq(shares, parts)
   for idx in 0..<parts:
     shares[idx].data = newString(secret.data.len()+1)
@@ -69,7 +69,7 @@ proc split*(secret: ShamirSecret, k, parts: uint): seq[ShamirPart] =
 
   return shares
 
-proc recover*(shares: openArray[ShamirPart]): ShamirSecret =
+proc recover*(shares: openArray[ShamirShare]): ShamirSecret =
   # Constants
   if shares.len() < 1:
     raise newException(ValueError, "not enough shares")

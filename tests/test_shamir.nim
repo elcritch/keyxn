@@ -15,8 +15,8 @@ test "basic split":
 
 test "basic recover static short":
   let shares =
-    [ShamirPart(data: "0E4A".parseHexStr()),
-     ShamirPart(data: "9954".parseHexStr())]
+    [ShamirShare(data: "0E4A".parseHexStr()),
+     ShamirShare(data: "9954".parseHexStr())]
   let res = shares.recover()
   assert "t" == res.data
 
