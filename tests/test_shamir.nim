@@ -3,7 +3,7 @@ import unittest
 import strutils
 import sequtils
 
-import keyxn/shamir
+import keyxn
 
 test "basic split":
   var secret = ShamirSecret(data: "test")
