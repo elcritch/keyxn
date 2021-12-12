@@ -1,6 +1,7 @@
 import random
 import sets
 import sequtils
+import strutils
 
 import gf_arithmetic
 
@@ -9,6 +10,19 @@ type
     data*: string
   ShamirPart* = object
     data*: string
+
+proc `$`*(shs: ShamirSecret): string =
+  result = shs.data.toHex()
+
+proc parseSecretHex*(hexValue: string): ShamirSecret =
+  result = ShamirSecret(data: hexValue.parseHexStr())
+proc initSecret*(rawValue: string): ShamirSecret =
+  result = ShamirSecret(data: rawValue)
+
+proc parseShareHex*(hexValue: string): ShamirPart =
+  result = ShamirPart(data: hexValue.parseHexStr())
+proc initShare*(rawValue: string): ShamirPart =
+  result = ShamirPart(data: rawValue)
 
 # @spec split_secret(non_neg_integer, non_neg_integer, binary) :: list(binary)
 proc split*(secret: ShamirSecret, k, parts: uint): seq[ShamirPart] =

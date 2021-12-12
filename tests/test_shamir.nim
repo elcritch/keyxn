@@ -24,8 +24,7 @@ test "basic recover static long":
   let
     shares =
       ["C8EF4C4201", "9673E6A402", "2AF9D99203", "992DC30904", "25A7FC3F05"]
-      .mapIt(it.parseHexStr())
-      .mapIt(ShamirPart(data: it))
+      .mapIt(parseShareHex(it))
 
   let
     res = shares.recover()
@@ -39,7 +38,7 @@ test "basic split & recover short":
   check secret == res
 
 test "basic split & recover long":
-  let secret = ShamirSecret(data: "super secret")
+  let secret = initSecret("super secret")
   let shares = secret.split(2, 4)
 
   let
