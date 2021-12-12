@@ -1,8 +1,12 @@
-# Shamir Secret in pure Nim
+# Shamir Secret Sharing (in pure Nim!)
+
+Easily create N cryptographically secure shares of a secret, with only K parts required to recover the secret (K <= N). 
+
+This can be a fun way to share a secret among N people and allow any K of them to recover the secret. Or perhaps allow your family to recover your crypto-wallet if an untimely demise should befall you. 
 
 This is a port of [KeyX](https://github.com/elcritch/keyx) which is itself a re-implementation of Hashicorp's Shamir in Go.
 
-Usage is simple. 
+Usage is simple: 
 
 ```nim
 import keyxn
