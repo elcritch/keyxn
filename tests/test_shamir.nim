@@ -1,6 +1,7 @@
 
 import unittest
-import sequtils
+import strutils
+import base64
 
 import keyxn/shamir
 
@@ -11,3 +12,10 @@ test "basic split":
 
   for share in shares:
     check len(share.data) == len(secret.data) + 1
+
+test "basic recover static short":
+  let shares =
+    [ShamirPart(data: "0E4A".parseHexStr()),
+     ShamirPart(data: "9954".parseHexStr())]
+  let res = recover(shares)
+  assert "t" == res.data

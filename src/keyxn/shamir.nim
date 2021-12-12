@@ -53,7 +53,7 @@ proc split*(secret: ShamirSecret, k, parts: uint): seq[ShamirPart] =
 
   return shares
 
-proc recover*(shares: seq[ShamirPart]): ShamirSecret =
+proc recover*(shares: openArray[ShamirPart]): ShamirSecret =
   # Constants
   if shares.len() < 1:
     raise newException(ValueError, "not enough shares")
