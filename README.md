@@ -1,6 +1,6 @@
 # Shamir Secret in pure Nim
 
-This is a port from the [KeyX](https://github.com/elcritch/keyx) which is itself a re-implementation of Hashicorp's Shamir in Go.
+This is a port of [KeyX](https://github.com/elcritch/keyx) which is itself a re-implementation of Hashicorp's Shamir in Go.
 
 Usage is simple. 
 
